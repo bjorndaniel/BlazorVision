@@ -2,6 +2,8 @@
 
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: black;
+    color: white;
 }
 
 app {
@@ -21,7 +23,7 @@ app {
 }
 
     .main .top-row {
-        background-color: #e6e6e6;
+        background-color: black;
         border-bottom: 1px solid #d6d5d5;
     }
 

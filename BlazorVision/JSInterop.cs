@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Blazor.Browser.Interop;
 
-namespace BlazorML
+namespace BlazorVision
 {
     public class JSInterop
     {
         public static string OnLoaded() =>
-            RegisteredFunction.Invoke<string>("BlazorML.JSInterop.OnLoaded");
+            RegisteredFunction.Invoke<string>("BlazorVision.JSInterop.OnLoaded");
     }
 }
