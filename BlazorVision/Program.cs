@@ -1,14 +1,7 @@
-﻿using Microsoft.AspNetCore.Blazor.Browser.Rendering;
-using Microsoft.AspNetCore.Blazor.Browser.Services;
+﻿var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-namespace BlazorVision
-{
-    public class Program
-    {
-        static void Main(string[] args)
-        {
-            var serviceProvider = new BrowserServiceProvider();
-            new BrowserRenderer(serviceProvider).AddComponent<App>("app");
-        }
-    }
-}
+builder.Services.AddScoped(sp => new HttpClient());
+
+await builder.Build().RunAsync();

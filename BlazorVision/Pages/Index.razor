@@ -1,6 +1,6 @@
 ﻿@page "/"
-@using System.Net.Http.Headers;
 @inject HttpClient  _httpClient
+@inject IJSRuntime JSRuntime
 <div class="row">
     <div class="col text-center">
         <h3>BlazorVision - having some fun with <a href="https://customvision.ai">Custom vision</a> and <a href="https://blazor.net">Blazor</a></h3>
@@ -11,14 +11,14 @@
 <div class="row justify-content-center">
     <div class="col text-center">
         <p>Upload an image to get a prediction</p>
-        <input id="fileInput" type="file" onchange="@(() => { State = ImageState.Loading; })" />
+        <input id="fileInput" type="file" @onchange="@((e) => { State = ImageState.Loading; })">
     </div>
 </div>
 <br />
 <div class="row justify-content-center">
     <div class="col text-center">
-        <img id="imgPreview" style="max-width:400px;" onload="@FileAdded" />
-        <input id="hfImage" type="hidden" bind="@Image" />
+        <img id="imgPreview" style="max-width:400px;" @onload="FileAdded" />
+        <input id="hfImage" type="hidden" @bind="@Image" />
     </div>
 </div>
 <div class="row justify-content-center">
@@ -47,30 +47,35 @@
 </div>
 @functions
 {
-    string Image { get; set; }
-    Prediction PredictionResult { get; set; }
-    ImageState State { get; set; }
-    protected override void OnAfterRender()
+    private string? Image { get; set; }
+    private Prediction? PredictionResult { get; set; }
+    private ImageState State { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        base.OnAfterRender();
-        JSInterop.OnLoaded();
+        var dotNetObjRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("registerDotnet", dotNetObjRef);
     }
 
-    protected async void FileAdded()
+    protected async Task FileAdded()
     {
+        if (string.IsNullOrEmpty(Image))
+        {
+            return;
+        }
         State = ImageState.Analyzing;
         PredictionResult = null;
         StateHasChanged();
-        var imageBytes = Convert.FromBase64String(Image.Split(new char[] { ',' })[1]);
+        var imageBytes = Convert.FromBase64String(Image?.Split(new char[] { ',' })[1]);
         using (var content = new ByteArrayContent(imageBytes))
         {
             _httpClient.DefaultRequestHeaders.Add("Prediction-Key", Configuration.PredictionKey);
             content.Headers.ContentType = new MediaTypeHeaderValue(Configuration.ContentType);
             var response = await _httpClient.PostAsync(Configuration.CustomVisionUrl, content);
             var result = await response.Content.ReadAsStringAsync();
-            var predictions = JsonUtil.Deserialize<Predictions>(result);
+            var predictions = JsonSerializer.Deserialize<Predictions>(result);
             var mostLikely = predictions?.predictions.OrderByDescending(_ => _.probability).FirstOrDefault();
-            Console.WriteLine(JsonUtil.Serialize(mostLikely));
+            Console.WriteLine(JsonSerializer.Serialize(mostLikely));
             if (mostLikely != null && mostLikely.probability > 0.75)
             {
                 PredictionResult = mostLikely;
